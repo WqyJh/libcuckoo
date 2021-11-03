@@ -23,7 +23,7 @@ if(UNIVERSAL_TRACKING_ALLOCATOR)
 endif()
 
 add_test(NAME pure_read
-         COMMAND universal_benchmark --reads 100 --prefill 75 --total-ops 500 --initial-capacity 23)
+         COMMAND universal_benchmark --reads 100 --prefill 75 --total-ops 500 --initial-capacity 23 --num-threads 1)
 add_test(NAME pure_insert
          COMMAND universal_benchmark --inserts 100 --total-ops 75 --initial-capacity 23)
 add_test(NAME pure_erase

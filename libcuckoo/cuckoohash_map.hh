@@ -464,7 +464,7 @@ public:
    */
   template <typename K, typename F> bool find_fn(const K &key, F fn) const {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<locked_table_mode>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       fn(buckets_[pos.index].mapped(pos.slot));
@@ -487,7 +487,7 @@ public:
    */
   template <typename K, typename F> bool update_fn(const K &key, F fn) {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<locked_table_mode>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       fn(buckets_[pos.index].mapped(pos.slot));
@@ -511,7 +511,7 @@ public:
    */
   template <typename K, typename F> bool erase_fn(const K &key, F fn) {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<locked_table_mode>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       if (fn(buckets_[pos.index].mapped(pos.slot))) {
@@ -547,8 +547,8 @@ public:
   template <typename K, typename F, typename... Args>
   bool uprase_fn(K &&key, F fn, Args &&... val) {
     hash_value hv = hashed_key(key);
-    auto b = snapshot_and_lock_two<normal_mode>(hv);
-    table_position pos = cuckoo_insert_loop<normal_mode>(hv, b, key);
+    auto b = snapshot_and_lock_two<locked_table_mode>(hv);
+    table_position pos = cuckoo_insert_loop<locked_table_mode>(hv, b, key);
     if (pos.status == ok) {
       add_to_bucket(pos.index, pos.slot, hv.partial, std::forward<K>(key),
                     std::forward<Args>(val)...);
@@ -595,7 +595,7 @@ public:
    */
   template <typename K> mapped_type find(const K &key) const {
     const hash_value hv = hashed_key(key);
-    const auto b = snapshot_and_lock_two<normal_mode>(hv);
+    const auto b = snapshot_and_lock_two<locked_table_mode>(hv);
     const table_position pos = cuckoo_find(key, hv.partial, b.i1, b.i2);
     if (pos.status == ok) {
       return buckets_[pos.index].mapped(pos.slot);
@@ -659,7 +659,7 @@ public:
    * @param n the hashpower to set for the table
    * @return true if the table changed size, false otherwise
    */
-  bool rehash(size_type n) { return cuckoo_rehash<normal_mode>(n); }
+  bool rehash(size_type n) { return cuckoo_rehash<locked_table_mode>(n); }
 
   /**
    * Reserve enough space in the table for the given number of elements. If
@@ -670,13 +670,13 @@ public:
    * @param n the number of elements to reserve space for
    * @return true if the size of the table changed, false otherwise
    */
-  bool reserve(size_type n) { return cuckoo_reserve<normal_mode>(n); }
+  bool reserve(size_type n) { return cuckoo_reserve<locked_table_mode>(n); }
 
   /**
    * Removes all elements in the table, calling their destructors.
    */
   void clear() {
-    auto all_locks_manager = lock_all(normal_mode());
+    auto all_locks_manager = lock_all(locked_table_mode());
     cuckoo_clear();
   }
 
